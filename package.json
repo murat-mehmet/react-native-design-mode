@@ -1,0 +1,41 @@
+{
+  "name": "react-native-design-mode",
+  "version": "1.0.0",
+  "description": "Design mode for React Native",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "mocha --reporter spec",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/murat-mehmet/react-native-app-console.git"
+  },
+  "keywords": [
+    "react",
+    "native",
+    "console"
+  ],
+  "author": "murat-mehmet",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/murat-mehmet/react-native-app-console/issues"
+  },
+  "homepage": "https://github.com/murat-mehmet/react-native-app-console#readme",
+  "devDependencies": {
+    "@types/react-native": "^0.64.7",
+    "chai": "^4.2.0",
+    "mocha": "^7.0.0",
+    "react": "^16.14.0",
+    "react-native": "^0.63.4",
+    "typescript": "^3.9.7"
+  },
+  "resolutions": {
+    "@types/react": "^16"
+  },
+  "peerDependencies": {
+    "react-native-safe-area-context": "^4.x"
+  }
+}
