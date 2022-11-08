@@ -57,35 +57,39 @@ export class DesignMode extends Component<DesignModeProps> {
         if (!isEnabled) return null;
 
         return (
-            <View style={StyleSheet.absoluteFillObject}>
+            <>
                 {this.state.shown &&
-                    (!this.state.ready ? (
-                        <>
-                            {!this.state.prepareError ? (
-                                <View style={[{flex: 1, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center'}]}>
-                                    <Text style={{color: 'black'}}>Preparing design...</Text>
-                                </View>
-                            ) : (
-                                <ScrollView style={{flex: 1}}
-                                            contentContainerStyle={[{backgroundColor: 'white', padding: 15}]}>
-                                    <Text style={{color: 'red', fontWeight: 'bold'}}>
-                                        Error while preparing design:{'\n'}{this.state.prepareError.message}
-                                    </Text>
-                                    <Text style={{color: 'red', marginTop: 15}}>
-                                        {this.state.prepareError.stack}
-                                    </Text>
-                                </ScrollView>
-                            )}
-                        </>
-                    ) : (
-                        <SafeAreaView style={{flex: 1}}>
-                            {!this.state.showPage
-                                ? children
-                                : this.state.showPageSelector
-                                    ? this.renderPageSelector()
-                                    : this.state.pages[this.state.currentPage]?.Component}
-                        </SafeAreaView>
-                    ))}
+                    <View style={StyleSheet.absoluteFillObject}>
+                        {!this.state.ready ? (
+                            <>
+                                {!this.state.prepareError ? (
+                                    <View style={[{flex: 1, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center'}]}>
+                                        <Text style={{color: 'black'}}>Preparing design...</Text>
+                                    </View>
+                                ) : (
+                                    <ScrollView style={{flex: 1}}
+                                                contentContainerStyle={[{backgroundColor: 'white', padding: 15}]}>
+                                        <Text style={{color: 'red', fontWeight: 'bold'}}>
+                                            Error while preparing design:{'\n'}{this.state.prepareError.message}
+                                        </Text>
+                                        <Text style={{color: 'red', marginTop: 15}}>
+                                            {this.state.prepareError.stack}
+                                        </Text>
+                                    </ScrollView>
+                                )}
+                            </>
+                        ) : (
+                            <SafeAreaView style={{flex: 1}}>
+                                {!this.state.showPage
+                                    ? children
+                                    : this.state.showPageSelector
+                                        ? this.renderPageSelector()
+                                        : this.state.pages[this.state.currentPage]?.Component}
+                            </SafeAreaView>
+                        )}
+
+                    </View>
+                }
                 <KeyboardAvoidingView style={styles.showButtonContainer} behavior="position" enabled={Platform.OS == 'ios'}>
                     <TouchableOpacity
                         style={styles.showButton}
@@ -107,7 +111,7 @@ export class DesignMode extends Component<DesignModeProps> {
                         <Text style={[styles.text]}>🛠️</Text>
                     </TouchableOpacity>
                 </KeyboardAvoidingView>
-            </View>
+            </>
         );
     }
 
