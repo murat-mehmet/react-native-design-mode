@@ -96,7 +96,6 @@ const DragItem = ({children}) => {
             const y = e.absoluteY;
             translateX.value = e.translationX + origin.x.value;
             translateY.value = e.translationY + origin.y.value;
-            console.log(x, y);
         },
         onEnd: (e, ctx) => {
             snapTo(e.absoluteX, e.absoluteY);
@@ -130,7 +129,11 @@ const DragItem = ({children}) => {
 
     return (
         <PanGestureHandler onGestureEvent={gesture}>
-            <Animated.View style={[rStyles]}>{clonedChildren}</Animated.View>
+            <Animated.View style={[rStyles, {
+                position: 'absolute',
+                bottom: 0,
+                left: 0
+            }]}>{clonedChildren}</Animated.View>
         </PanGestureHandler>
     );
 };

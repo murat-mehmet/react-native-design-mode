@@ -200,9 +200,6 @@ const styles = StyleSheet.create({
         color: 'white',
     },
     showButtonContainer: {
-        position: 'absolute',
-        bottom: 60,
-        left: 15,
         height: 60,
         width: 60,
     },
