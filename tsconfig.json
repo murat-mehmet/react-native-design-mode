@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "commonjs",
+    "moduleResolution": "node",
     "lib": [
       "esnext"
     ],
@@ -13,6 +14,8 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "useDefineForClassFields": true
-  }
+    "useDefineForClassFields": true,
+    "skipLibCheck": true
+  },
+  "include": ["lib"]
 }
