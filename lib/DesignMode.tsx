@@ -1,6 +1,7 @@
 import React, {Component, ReactNode} from 'react';
-import {KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {KeyboardAvoidingView, LayoutAnimation, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,} from 'react-native';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
+import {context} from "./design-context";
 import {DesignModeProps} from './design-mode.types';
 import {DesignPage} from './DesignPage';
 import DragItem from './DragItem';
@@ -18,6 +19,7 @@ export class DesignMode extends Component<DesignModeProps> {
         showPage: false,
         currentPage: 0,
         showPageSelector: false,
+        search: '',
     };
 
     componentDidMount() {
@@ -34,19 +36,34 @@ export class DesignMode extends Component<DesignModeProps> {
     load = () => {
         const {children, prepare} = this.props;
         const pages = [];
-        React.Children.forEach(children, element => {
-            if (!React.isValidElement(element)) {
-                return;
-            }
+        if (!(children as any)?.length)
+            context.designStubs.forEach(design => {
+                design.components.forEach(componentStub => {
+                    const titles = componentStub.title.split('/');
+                    const hasVariant = design.components.length > 1;
+                    titles.splice(-1, !hasVariant ? 1 : 0, design.title);
+                    pages.push({
+                        title: titles.join('/'),
+                        prepare: componentStub.prepare,
+                        Component: <componentStub.component />,
+                        hasVariant,
+                    });
+                })
+            })
+        else
+            React.Children.forEach<DesignPage>(children as any, element => {
+                if (!React.isValidElement(element)) {
+                    return;
+                }
 
-            if (element.type == DesignPage) {
-                pages.push({
-                    title: element.props.title,
-                    prepare: element.props.prepare,
-                    Component: element,
-                });
-            }
-        });
+                if (element.type == DesignPage) {
+                    pages.push({
+                        title: element.props.title,
+                        prepare: element.props.prepare,
+                        Component: element,
+                    });
+                }
+            });
         let willShowPageSelector = !!pages.length;
         this.setState({
             shown: true,
@@ -57,7 +74,7 @@ export class DesignMode extends Component<DesignModeProps> {
             ready: willShowPageSelector || !prepare,
         });
         if (prepare) {
-            prepare()
+            (async () => prepare(context))()
                 .then(() => this.setState({ready: true}))
                 .catch(e => this.setState({prepareError: e}));
         }
@@ -89,19 +106,25 @@ export class DesignMode extends Component<DesignModeProps> {
                                         <Text style={{color: 'black'}}>Preparing design...</Text>
                                     </View>
                                 ) : (
-                                    <ScrollView
-                                        style={{flex: 1}}
-                                        contentContainerStyle={[
-                                            {backgroundColor: 'white', padding: 15},
-                                        ]}>
-                                        <Text style={{color: 'red', fontWeight: 'bold'}}>
-                                            Error while preparing design:{'\n'}
-                                            {this.state.prepareError.message}
-                                        </Text>
-                                        <Text style={{color: 'red', marginTop: 15}}>
-                                            {this.state.prepareError.stack}
-                                        </Text>
-                                    </ScrollView>
+                                    <SafeAreaProvider>
+                                        <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
+                                            <View style={{flex: 1}}>
+                                                <ScrollView
+                                                    style={{flex: 1}}
+                                                    contentContainerStyle={[
+                                                        {backgroundColor: 'white', padding: 15},
+                                                    ]}>
+                                                    <Text style={{color: 'red', fontWeight: 'bold'}}>
+                                                        Error while preparing design:{'\n'}
+                                                        {this.state.prepareError.message}
+                                                    </Text>
+                                                    <Text style={{color: 'red', marginTop: 15}}>
+                                                        {this.state.prepareError.stack}
+                                                    </Text>
+                                                </ScrollView>
+                                            </View>
+                                        </SafeAreaView>
+                                    </SafeAreaProvider>
                                 )}
                             </>
                         ) : (
@@ -148,50 +171,190 @@ export class DesignMode extends Component<DesignModeProps> {
         );
     }
 
-    renderPageSelector = () => {
+    buildTree(inputArray) {
+        const root = {children: {}};
+        const search = this.state.search;
+        const searchLower = search.toLowerCase();
+
+        for (let i = 0; i < inputArray.length; i++) {
+            const obj = inputArray[i];
+
+            if (search.length > 1) {
+                const titleLower = obj.title.toLowerCase();
+                if (titleLower.indexOf(searchLower) == -1) {
+                    continue;
+                }
+            }
+
+            const {title, ...otherFields} = obj;
+            otherFields.pageIndex = i;
+
+            const titleParts = obj.title.split('/').filter(part => part.trim() !== '');
+            let currentNode = root;
+
+            for (let i = 0; i < titleParts.length; i++) {
+                const part = titleParts[i];
+
+                if (!currentNode.children[part]) {
+                    currentNode.children[part] = {title: part, children: {}};
+                }
+
+                if (search.length > 1) {
+                    const partLower = part.toLowerCase();
+                    if (partLower.indexOf(searchLower) > -1) {
+                        currentNode.children[part]['highlight'] = true;
+                    }
+                }
+                if (i == titleParts.length - 1) {
+                    Object.assign(currentNode.children[part], otherFields);
+                    if (otherFields.hasVariant) {
+                        currentNode['isComponent'] = true;
+                        currentNode.children[part]['isVariant'] = true
+                    } else
+                        currentNode.children[part]['isComponent'] = true;
+                } else {
+                    currentNode['isFolder'] = true;
+                }
+                currentNode = currentNode.children[part];
+            }
+        }
+
+        return root.children;
+    }
+
+    renderPageSelectorItem = (x, pad) => {
         return (
-            <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
-                <Text
-                    style={{
-                        color: 'black',
-                        textAlign: 'center',
-                        marginTop: 15,
-                        fontWeight: 'bold',
-                    }}>
-                    Select a design
-                </Text>
-                <ScrollView contentContainerStyle={{paddingBottom: 15}}>
-                    {this.state.pages.map((x, i) => (
-                        <TouchableOpacity
-                            key={i}
+            <TouchableOpacity
+                style={{
+                    paddingVertical: 15,
+                    backgroundColor: x.highlight ? '#ffd' : '#f3f4fd',
+                    paddingLeft: pad,
+                    // borderWidth: 1, borderColor: 'red'
+                }}
+                onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+                    const page = x;
+                    this.setState({
+                        currentPage: page.pageIndex,
+                        showPageSelector: false,
+                        ready: !page.prepare,
+                    });
+                    if (page.prepare) {
+                        (async () => page.prepare(context))()
+                            .then(() => this.setState({ready: true}))
+                            .catch(e => this.setState({prepareError: e}));
+                    }
+                }}>
+                <Text style={{color: 'black'}}>{x.isVariant ? '➜' : '🛠'} {x.title}</Text>
+            </TouchableOpacity>
+        )
+    }
+
+    renderPageSelector = () => {
+        const pages = this.buildTree(this.state.pages);
+        return (
+            <SafeAreaProvider>
+                <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
+                    <View>
+                        <Text
                             style={{
-                                marginHorizontal: 15,
-                                marginTop: 15,
-                                padding: 15,
-                                borderWidth: 1,
-                                borderRadius: 10,
-                            }}
-                            onPress={() => {
-                                const page = this.state.pages[i];
-                                this.setState({
-                                    currentPage: i,
-                                    showPageSelector: false,
-                                    ready: !page.prepare,
-                                });
-                                if (page.prepare) {
-                                    page
-                                        .prepare()
-                                        .then(() => this.setState({ready: true}))
-                                        .catch(e => this.setState({prepareError: e}));
-                                }
+                                color: 'black',
+                                textAlign: 'center',
+                                marginVertical: 15,
+                                fontWeight: 'bold',
                             }}>
-                            <Text style={{color: 'black'}}>{x.title}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </SafeAreaView>
+                            Select a design
+                        </Text>
+                    </View>
+                    <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginBottom: 15,
+                        borderTopWidth: 1,
+                        borderBottomWidth: 1,
+                        borderColor: '#ccc',
+                        ...Platform.select({
+                            ios: {padding: 15}
+                        })
+                    }}>
+                        <TextInput style={{flex: 1, color: 'black'}} placeholder={'search...'}
+                                   value={this.state.search}
+                                   onChangeText={search => this.setState({search})} />
+                        <Text>🔎</Text>
+                    </View>
+                    <ScrollView contentContainerStyle={{paddingBottom: 15}}>
+                        {Object.values<any>(pages).map((x, i) => (
+                            <View key={i} style={{
+                                borderTopWidth: 1,
+                                borderBottomWidth: 1,
+                                borderColor: '#ccc',
+                                marginBottom: 15,
+                            }}>
+                                <Accordion
+                                    item={x}
+                                    renderSelectorRow={this.renderPageSelectorItem}
+                                    searching={this.state.search.length > 1}
+                                    pad={15}
+                                />
+                            </View>
+                        ))}
+                    </ScrollView>
+                </SafeAreaView>
+            </SafeAreaProvider>
         );
     };
+}
+
+class Accordion extends Component<{item: {title, children, isComponent, highlight}, renderSelectorRow, pad, searching}, any> {
+    state = {
+        isOpen: this.props.searching
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.searching != this.props.searching) {
+            this.setState({isOpen: this.props.searching});
+        }
+    }
+
+    render() {
+        const children = Object.values<any>(this.props.item.children);
+        if (!children.length) {
+            return this.props.renderSelectorRow(this.props.item, this.props.pad);
+        }
+        return (
+            <TouchableOpacity
+                style={[{
+                    // borderWidth: 1, borderColor: 'green'
+                }]}
+                onPress={() => {
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+                    this.setState({isOpen: !this.state.isOpen})
+                }}>
+                <View style={{
+                    flexDirection: 'row', justifyContent: 'space-between',
+                    backgroundColor: this.props.item.highlight ? '#ffd' : '#f8f8f8',
+                    padding: 15,
+                    paddingLeft: this.props.pad,
+                }}>
+                    <Text style={{color: 'black'}}>{this.props.item.isComponent ? '🛠' : '📁'} {this.props.item.title}</Text>
+                    <Text style={{color: 'black', fontWeight: 'bold', fontSize: 16}}>
+                        {this.state.isOpen ? '-' : '+'}
+                    </Text>
+                </View>
+                {this.state.isOpen && children.map((x, i) => (
+                    <View style={{
+                        borderTopWidth: 1,
+                        borderColor: '#ccc',
+                    }}>
+                        <Accordion key={i} item={x} renderSelectorRow={this.props.renderSelectorRow} pad={this.props.pad + 15}
+                                   searching={this.props.searching} />
+                    </View>
+                ))}
+            </TouchableOpacity>
+        )
+    }
 }
 
 const styles = StyleSheet.create({
