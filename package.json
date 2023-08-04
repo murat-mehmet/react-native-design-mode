@@ -1,13 +1,13 @@
 {
   "name": "react-native-design-mode",
-  "version": "2.1.4",
+  "version": "2.1.12",
   "description": "Design mode for React Native",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "mocha --reporter spec",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",

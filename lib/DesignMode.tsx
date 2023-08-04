@@ -6,7 +6,7 @@ import {DesignModeProps} from './design-mode.types';
 import {DesignPage} from './DesignPage';
 import DragItem from './DragItem';
 
-export class DesignMode extends Component<DesignModeProps> {
+export class DesignMode extends Component<DesignModeProps, any> {
     state = {
         ready: false,
         prepareError: null as Error,
@@ -20,6 +20,17 @@ export class DesignMode extends Component<DesignModeProps> {
         currentPage: 0,
         showPageSelector: false,
         search: '',
+        initialOpenStates: {} as {[key: string]: boolean},
+        loadedPageList: false,
+    };
+
+    initialOpenStates = {
+        set: (id, isOpen) => this.setState(state => {
+            state.initialOpenStates[id] = isOpen;
+            return {initialOpenStates: {...state.initialOpenStates}};
+        }),
+        get: (id) => this.state.initialOpenStates[id],
+        clear: () => this.setState({initialOpenStates: {}})
     };
 
     componentDidMount() {
@@ -64,7 +75,7 @@ export class DesignMode extends Component<DesignModeProps> {
                     });
                 }
             });
-        let willShowPageSelector = !!pages.length;
+       let willShowPageSelector = !!pages.length;
         this.setState({
             shown: true,
             pages,
@@ -72,18 +83,23 @@ export class DesignMode extends Component<DesignModeProps> {
             showPageSelector: willShowPageSelector,
             prepareError: null,
             ready: willShowPageSelector || !prepare,
+            loadedPageList: !!pages.length,
         });
-        if (prepare) {
-            (async () => prepare(context))()
-                .then(() => this.setState({ready: true}))
-                .catch(e => this.setState({prepareError: e}));
+        if (!pages.length)
+            console.log('[Designer] No pages were loaded, will not display floating button')
+        else {
+            if (prepare) {
+                (async () => prepare(context))()
+                    .then(() => this.setState({ready: true}))
+                    .catch(e => this.setState({prepareError: e}));
+            }
         }
     };
 
     render() {
         const {children, enabled} = this.props;
         const isEnabled = enabled == null ? __DEV__ : enabled;
-        if (!isEnabled) {
+        if (!this.state.loadedPageList || !isEnabled) {
             return null;
         }
 
@@ -172,7 +188,7 @@ export class DesignMode extends Component<DesignModeProps> {
     }
 
     buildTree(inputArray) {
-        const root = {children: {}};
+        const root = {id: '_', children: {}};
         const search = this.state.search;
         const searchLower = search.toLowerCase();
 
@@ -192,11 +208,11 @@ export class DesignMode extends Component<DesignModeProps> {
             const titleParts = obj.title.split('/').filter(part => part.trim() !== '');
             let currentNode = root;
 
-            for (let i = 0; i < titleParts.length; i++) {
-                const part = titleParts[i];
+            for (let j = 0; j < titleParts.length; j++) {
+                const part = titleParts[j];
 
                 if (!currentNode.children[part]) {
-                    currentNode.children[part] = {title: part, children: {}};
+                    currentNode.children[part] = {id: `${currentNode.id}_${part}`, title: part, children: {}};
                 }
 
                 if (search.length > 1) {
@@ -205,7 +221,7 @@ export class DesignMode extends Component<DesignModeProps> {
                         currentNode.children[part]['highlight'] = true;
                     }
                 }
-                if (i == titleParts.length - 1) {
+                if (j == titleParts.length - 1) {
                     Object.assign(currentNode.children[part], otherFields);
                     if (otherFields.hasVariant) {
                         currentNode['isComponent'] = true;
@@ -227,7 +243,7 @@ export class DesignMode extends Component<DesignModeProps> {
             <TouchableOpacity
                 style={{
                     paddingVertical: 15,
-                    backgroundColor: x.highlight ? '#ffd' : '#f3f4fd',
+                    backgroundColor: x.highlight ? '#ffd' : (x.isVariant ? '#fafffe' : '#f3f4fd'),
                     paddingLeft: pad,
                     // borderWidth: 1, borderColor: 'red'
                 }}
@@ -246,7 +262,7 @@ export class DesignMode extends Component<DesignModeProps> {
                             .catch(e => this.setState({prepareError: e}));
                     }
                 }}>
-                <Text style={{color: 'black'}}>{x.isVariant ? '➜' : '🛠'} {x.title}</Text>
+                <Text style={{color: 'black'}}>{x.isVariant ? '➜  ' : '🛠  '} {x.title}</Text>
             </TouchableOpacity>
         )
     }
@@ -270,18 +286,30 @@ export class DesignMode extends Component<DesignModeProps> {
                     <View style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        marginBottom: 15,
                         borderTopWidth: 1,
                         borderBottomWidth: 1,
                         borderColor: '#ccc',
-                        ...Platform.select({
-                            ios: {padding: 15}
-                        })
+                        paddingHorizontal: 15,
                     }}>
-                        <TextInput style={{flex: 1, color: 'black'}} placeholder={'search...'}
+                        <TextInput style={{
+                            flex: 1, color: 'black',
+                            ...Platform.select({
+                                ios: {paddingVertical: 15}
+                            })
+                        }} placeholder={'search...'}
                                    value={this.state.search}
-                                   onChangeText={search => this.setState({search})} />
-                        <Text>🔎</Text>
+                                   onChangeText={search => {
+                                       if (!search.length)
+                                           this.initialOpenStates.clear();
+                                       this.setState({search});
+                                   }} />
+                        {this.state.search ? (
+                            <TouchableOpacity style={{padding: 5}} onPress={() => this.setState({search: ''})}>
+                                <Text>✖</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <Text>🔎</Text>
+                        )}
                     </View>
                     <ScrollView contentContainerStyle={{paddingBottom: 15}}>
                         {Object.values<any>(pages).map((x, i) => (
@@ -289,11 +317,12 @@ export class DesignMode extends Component<DesignModeProps> {
                                 borderTopWidth: 1,
                                 borderBottomWidth: 1,
                                 borderColor: '#ccc',
-                                marginBottom: 15,
                             }}>
                                 <Accordion
                                     item={x}
                                     renderSelectorRow={this.renderPageSelectorItem}
+                                    initialOpenState={this.state.initialOpenStates}
+                                    setOpenState={this.initialOpenStates.set}
                                     searching={this.state.search.length > 1}
                                     pad={15}
                                 />
@@ -306,14 +335,17 @@ export class DesignMode extends Component<DesignModeProps> {
     };
 }
 
-class Accordion extends Component<{item: {title, children, isComponent, highlight}, renderSelectorRow, pad, searching}, any> {
+class Accordion extends Component<{item: {title, children, isComponent, highlight, id}, renderSelectorRow, pad, searching, initialOpenState, setOpenState}, any> {
     state = {
-        isOpen: this.props.searching
+        isOpen: this.props.initialOpenState[this.props.item.id] || this.props.searching
     }
 
     componentDidUpdate(prevProps) {
         if (prevProps.searching != this.props.searching) {
             this.setState({isOpen: this.props.searching});
+        }
+        else if (prevProps.initialOpenState != this.props.initialOpenState) {
+            this.setState({isOpen: this.props.initialOpenState[this.props.item.id]});
         }
     }
 
@@ -331,14 +363,15 @@ class Accordion extends Component<{item: {title, children, isComponent, highligh
                     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
                     this.setState({isOpen: !this.state.isOpen})
+                    this.props.setOpenState(this.props.item.id, !this.state.isOpen);
                 }}>
                 <View style={{
                     flexDirection: 'row', justifyContent: 'space-between',
-                    backgroundColor: this.props.item.highlight ? '#ffd' : '#f8f8f8',
+                    backgroundColor: this.props.item.highlight ? '#ffd' : (this.props.item.isComponent ? '#f3f4fd' : '#f8f8f8'),
                     padding: 15,
                     paddingLeft: this.props.pad,
                 }}>
-                    <Text style={{color: 'black'}}>{this.props.item.isComponent ? '🛠' : '📁'} {this.props.item.title}</Text>
+                    <Text style={{color: 'black'}}>{this.props.item.isComponent ? '🛠  ' : '📁  '} {this.props.item.title}</Text>
                     <Text style={{color: 'black', fontWeight: 'bold', fontSize: 16}}>
                         {this.state.isOpen ? '-' : '+'}
                     </Text>
@@ -348,7 +381,10 @@ class Accordion extends Component<{item: {title, children, isComponent, highligh
                         borderTopWidth: 1,
                         borderColor: '#ccc',
                     }}>
-                        <Accordion key={i} item={x} renderSelectorRow={this.props.renderSelectorRow} pad={this.props.pad + 15}
+                        <Accordion key={i} item={x} renderSelectorRow={this.props.renderSelectorRow}
+                                   pad={this.props.pad + 15}
+                                   initialOpenState={this.props.initialOpenState}
+                                   setOpenState={this.props.setOpenState}
                                    searching={this.props.searching} />
                     </View>
                 ))}
@@ -361,6 +397,7 @@ const styles = StyleSheet.create({
     text: {
         fontFamily: Platform.OS == 'ios' ? 'Courier New' : 'monospace',
         color: 'white',
+        fontSize: 22
     },
     showButtonContainer: {
         height: 60,
@@ -370,9 +407,9 @@ const styles = StyleSheet.create({
         height: 60,
         width: 60,
         borderRadius: 30,
-        backgroundColor: 'black',
-        borderWidth: 1,
-        borderColor: 'white',
+        backgroundColor: 'white',
+        borderWidth: 10,
+        borderColor: 'black',
         alignItems: 'center',
         justifyContent: 'center',
     },

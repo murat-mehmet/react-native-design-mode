@@ -7,7 +7,7 @@ export class DesignContext {
     loaded = {};
     parameters = {};
 
-    initialize(){
+    initialize() {
         this.designStubs = [];
         this.decorators = [];
         this.loaders = {};
@@ -47,38 +47,47 @@ export class DesignContext {
                 let component = getComponentFromDesign(designMeta, componentStub.component);
                 const parameters = {...this.parameters, ...designMeta.parameters, ...componentStub.component?.parameters};
                 const loaders = {...this.loaders, ...designMeta.loaders, ...componentStub.component?.loaders};
-                let prepare;
+                const decorators = [
+                    ...componentStub.component?.decorators || [],
+                    ...designMeta.decorators || [],
+                    ...this.decorators || [],
+                ];
+                const subContext = {
+                    loaded: this.loaded,
+                    parameters,
+                    loaders,
+                    decorators,
+                }
+                let _prepare;
                 if (!!Object.keys(this.loaders).length) {
-                    prepare = (context) => {
-                        const loaderFn = Promise.all(
-                            Object.entries<Function>(loaders)
-                                .map(([name, loader]) => loader(this)
-                                    .then(result => {
-                                        this.loaded[name] = result;
-                                    })
-                                    .catch(err => this.loaded[name] = err)));
+                    _prepare = async (context) => {
+                        for (const [name, loader] of Object.entries<(ctx: any) => Promise<any>>(loaders)) {
+                            if (this.loaded[name])
+                                continue;
+                            try {
+                                this.loaded[name] = await loader(context);
+                            } catch (err) {
+                                this.loaded[name] = err;
+                            }
+                        }
                         const componentPrepare = componentStub.component?.prepare || designMeta.prepare;
                         if (componentPrepare)
-                            return loaderFn.then(() => componentPrepare(context));
-                        return loaderFn;
+                            return componentPrepare(context);
                     }
                 } else
-                    prepare = componentStub.component?.prepare || designMeta.prepare;
-                //apply local decorator
-                if (designMeta.decorators?.length)
-                    for (const decorator of designMeta.decorators) {
-                        component = applyDecorator(decorator, component, this);
-                    }
+                    _prepare = componentStub.component?.prepare || designMeta.prepare;
 
-                // apply global decorators
-                if (this.decorators?.length)
-                    for (const decorator of this.decorators) {
-                        component = applyDecorator(decorator, component, this);
-                    }
+                let prepare;
+                if (_prepare)
+                    prepare = () => _prepare(subContext);
+
+                for (const decorator of decorators) {
+                    component = applyDecorator(decorator, component, subContext);
+                }
 
                 designStub.components.push({
                     title: componentStub.component?.title || componentStub.name,
-                    prepare: prepare,
+                    prepare,
                     component,
                     parameters,
                 })
