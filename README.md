@@ -237,7 +237,7 @@ Contributions are welcome! If you find a bug or want to add a new feature, feel 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
-If you have any questions or need assistance, feel free to open a issue.
+If you have any questions or need assistance, feel free to open an issue.
 
 Happy coding!
 
