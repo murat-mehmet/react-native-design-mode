@@ -103,9 +103,9 @@ AppRegistry.registerComponent(appName, () => Designer);
 #### Now you are ready to create your first design!
 
 ### &#127912; Creating designs
-For example we have a `Login.tsx` screen that we want to design.
+Imagine you have a `Login.tsx` screen that you want to design. 
 
-We simply create a `Login.design.tsx` file near it.
+To achieve this, all you have to do is create a new file named `Login.design.tsx` right next to the `Login.tsx`.
 ```typescript jsx
 // src/Login.design.tsx
 
@@ -116,16 +116,19 @@ export default {
   component: Login,
 }
 ```
+Once you've added the new design file, you'll need to update the design list. 
 
-Finally, after adding a new design file we need to update the design list.
-We either restart the bundler, which will trigger prestart script or simply use cli to update the list.
+You can do this in two ways:
+- Use the command-line interface (CLI) to manually update the list. (Recommended)
 ```bash
-npm start
-# or
 designer update
 ```
+- Restart the bundler, which will automatically trigger the prestart script
+```bash
+npm start
+```
 
-That's it! Now open the app and you will see the Login screen in design mode.
+Great news! You're all set! Open the app, and you'll see the Login screen right in design mode. Now you can start designing and refining the layout with ease.
 
 ### &#128260; Moving between designs
 
