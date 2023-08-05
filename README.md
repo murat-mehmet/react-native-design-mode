@@ -45,7 +45,7 @@ Heavily inspired by storybook project so most things are similar.
 - Lightweight and efficient implementation
 - Familiar structure that is inspired by Storybook
 
-## ⚙️ Installation
+## ⚙️Installation
 
 You can install the package via npm or yarn:
 
@@ -150,7 +150,7 @@ export const Basic = {}
 export const Dark = () => <Login theme={'dark'} />
 ```
 
-### 🗂️ Categorized list view
+### 🗂️Categorized list view
 
 We can categorize our views infinitely by adding group names in titles
 
