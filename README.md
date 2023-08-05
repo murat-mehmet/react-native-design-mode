@@ -1,4 +1,4 @@
-# React Native Design Mode - Simplify Creating Views
+# 🛠️ React Native Design Mode - Simplify Creating Views
 
 [![npm version](https://badge.fury.io/js/react-native-design-mode.svg)](https://badge.fury.io/js/react-native-design-mode)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -12,19 +12,40 @@
     <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/search.png" width="250px" /> 
 </div>
 
-## Description
+# Table of Contents
+
+1. 📄 [Description](#description)
+2. 🚀 [Features](#features)
+3. ⚙️ [Installation](#installation)
+4. 🏁 [Getting Started](#getting-started)
+5. 💡 [Usage](#usage)
+  - 🎨 [Creating Designs](#creating-designs)
+  - 🔄 [Moving Between Designs](#moving-between-designs)
+  - 🔧 [Creating Designs with Variants](#creating-designs-with-variants)
+  - 🗂️ [Categorized List View](#categorized-list-view)
+  - 🎈 [Draggable Floating Button](#draggable-floating-button)
+6. 🔧 [Configuration](#configuration)
+  - 📄 [`main.js`](#mainjs)
+  - 📄 [`index.js`](#indexjs)
+  - 📄 [`designer.requires.js`](#designerrequiresjs)
+  - 📄 [`preview.js`](#previewjs)
+7. 🤝 [Contributing](#contributing)
+8. 📜 [License](#license)
+9. 📧 [Contact](#contact)
+
+## 📄 Description
 React Native Design Mode is a developer-friendly package that streamlines the process of creating views without the need to navigate through the entire app flow. If you've found Storybook to be a bit heavy for your simple projects, this package offers a lightweight alternative with all the features you need.
 
 Heavily inspired by storybook project so most things are similar.
 
-## Features
+## 🚀 Features
 
 - Effortless design mode toggle with a floating button
 - Allows developer to focus more on quickly designing views
 - Lightweight and efficient implementation
 - Familiar structure that is inspired by Storybook
 
-## Installation
+## ⚙️ Installation
 
 You can install the package via npm or yarn:
 
@@ -34,7 +55,7 @@ npm install react-native-design-mode
 yarn add react-native-design-mode
 ```
 
-## Getting Started
+## 🏁 Getting Started
 Run CLI to quickly install designer into your project.
 ```bash
 designer install
@@ -56,7 +77,7 @@ After running the command you will have the following folder structure
 │       ├── 📄 main.js
 │       └── 📄 preview.js
 ```
-## Usage
+## 💡 Usage
 Import the designer file
 ```js
 import Designer from "./.designer";
@@ -81,7 +102,7 @@ AppRegistry.registerComponent(appName, () => Designer);
 
 #### Now you are ready to create your first design!
 
-### Creating designs
+### 🎨 Creating designs
 For example we have a `Login.tsx` screen that we want to design.
 
 We simply create a `Login.design.tsx` file near it.
@@ -98,7 +119,7 @@ export default {
 
 That's it! Now start the app and you will see Login screen in design mode.
 
-### Moving between designs
+### 🔄 Moving between designs
 
 While we are on the design selection screen, floating button works like a toggle to switch design mode on/off.
 
@@ -109,7 +130,7 @@ After you select a design, we can click on floating button to go back to design 
     <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/design.jpg" width="250px" />
 </div>
 
-### Creating designs with variants
+### 🔧 Creating designs with variants
 
 We can easily create different variants of a design by exporting more design objects.
 ```typescript jsx
@@ -129,7 +150,7 @@ export const Basic = {}
 export const Dark = () => <Login theme={'dark'} />
 ```
 
-### Categorized list view
+### 🗂️ Categorized list view
 
 We can categorize our views infinitely by adding group names in titles
 
@@ -148,7 +169,7 @@ export default {
 }
 ```
 
-### Draggable floating button
+### 🎈 Draggable floating button
 
 We have the flexibility to position the floating button on the screen edges, ensuring it won't obstruct our view design process.
 
@@ -157,8 +178,8 @@ We have the flexibility to position the floating button on the screen edges, ens
     <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/floating2.png" width="250px" />
 </div>
 
-## Configuration
-### `main.js`
+## 🔧 Configuration
+### 📄 `main.js`
 ```js
 module.exports = {
   designs: ["../src/**/*.design.@(js|jsx|ts|tsx)"],
@@ -167,7 +188,7 @@ module.exports = {
 - `designs`: This is an array that defines the location of our design files. By default, we use a glob pattern to load all *.design.js files inside the src directory and its subdirectories. You may need to adjust the path based on your project structure.
 - `excludePaths`: This is an array of path patterns that will be excluded from loading. By default it is `['**/node_modules']`
 
-### `index.js`
+### 📄 `index.js`
 ```js
 import { getDesignModeUI } from "react-native-design-mode";
 
@@ -180,7 +201,7 @@ export default Designer;
 ```
 All designs are imported here. Before deploying to production either you remove `<Designer />` from usage or comment out `import "./designer.requires";` line in this file.
 
-### `designer.requires.js`
+### 📄 `designer.requires.js`
 ```js
 /* do not change this file, it is auto generated by design mode. */
 
@@ -195,7 +216,7 @@ It is imported in `.designer/index.js` and contains all designs of your project.
 
 You shouldn't modify this file as it will be overwritten.
 
-### `preview.js`
+### 📄 `preview.js`
 ```js
 import React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -277,13 +298,13 @@ export default {
 };
 ```
 
-## Contributing
+## 🤝 Contributing
 Contributions are welcome! If you find a bug or want to add a new feature, feel free to submit a pull request. For major changes, please open an issue first to discuss the proposed changes.
 
-## License
+## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contact
+## 📧 Contact
 If you have any questions or need assistance, feel free to open an issue.
 
 Happy coding!
