@@ -117,7 +117,15 @@ export default {
 }
 ```
 
-That's it! Now start the app and you will see Login screen in design mode.
+Finally, after adding a new design file we need to update the design list.
+We either restart the bundler, which will trigger prestart script or simply use cli to update the list.
+```bash
+npm start
+# or
+designer update
+```
+
+That's it! Now open the app and you will see the Login screen in design mode.
 
 ### &#128260; Moving between designs
 
