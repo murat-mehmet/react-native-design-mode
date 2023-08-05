@@ -1,4 +1,4 @@
-import React from "react";
+import React, {isValidElement} from "react";
 
 export class DesignContext {
     designStubs = [];
@@ -101,9 +101,13 @@ export class DesignContext {
 
 function applyDecorator(decorator, component, context) {
     const decorated = decorator(component, context);
-    if (typeof decorated !== "function")
+
+    // <View />
+    if (isValidElement(decorated))
         return () => decorated;
 
+    // () => <View />
+    // View
     return decorated;
 }
 

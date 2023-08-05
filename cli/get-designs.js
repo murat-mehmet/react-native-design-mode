@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-const { getArguments } = require('./handle-args');
 const path = require('path');
 const fs = require('fs');
 const glob = require('glob');
@@ -77,26 +76,19 @@ function ensureRelativePathHasDot(relativePath) {
 
 
 function writeRequires({ configPath, absolute = false }) {
-  const storybookRequiresLocation = path.resolve(cwd, configPath, 'designer.requires.js');
+  const designerRequiresLocation = path.resolve(cwd, configPath, 'designer.requires.js');
 
   const mainImport = getMain({ configPath });
 
   const main = mainImport.default ?? mainImport;
 
-  const reactNativeOptions = main.reactNativeOptions;
-
-  const excludePaths = reactNativeOptions && reactNativeOptions.excludePaths;
+  const excludePaths = main.excludePaths;
 
   const normalizedExcludePaths = normalizeExcludePaths(excludePaths);
 
-  // const storiesSpecifiers = normalizeStories(main.stories, {
-  //   configDir: configPath,
-  //   workingDir: cwd,
-  // });
-
   let configure = '';
 
-  const storyRequires = main.stories.map((specifier) => {
+  const designerRequires = main.designs.map((specifier) => {
     const paths = glob
       .sync(specifier, {
         cwd: path.resolve(cwd, configPath),
@@ -105,11 +97,11 @@ function writeRequires({ configPath, absolute = false }) {
         ignore:
           normalizedExcludePaths !== undefined ? normalizedExcludePaths : ['**/node_modules'],
       })
-      .map((storyPath) => {
-        const pathWithDirectory = path.join(path.resolve(cwd, configPath), storyPath);
+      .map((designPath) => {
+        const pathWithDirectory = path.join(path.resolve(cwd, configPath), designPath);
 
         const requirePath = absolute
-          ? storyPath
+          ? designPath
           : ensureRelativePathHasDot(path.relative(configPath, pathWithDirectory));
 
         const normalizePathForWindows = (str) =>
@@ -120,17 +112,17 @@ function writeRequires({ configPath, absolute = false }) {
     return paths;
   }, []);
 
-  const path_obj_str = `[${storyRequires.join(',')}]`;
+  const path_obj_str = `[${designerRequires.join(',')}]`;
 
   configure = `   
-      const getStories=() => {
+      const getDesigns=() => {
           return ${path_obj_str};
       };
 
-      context.configure(getStories)
+      context.configure(getDesigns)
     `;
 
-  fs.writeFileSync(storybookRequiresLocation, '');
+  fs.writeFileSync(designerRequiresLocation, '');
 
   const previewExists = getPreviewExists({ configPath });
 
@@ -151,12 +143,10 @@ function writeRequires({ configPath, absolute = false }) {
 
   const formattedFileContent = prettier.format(fileContent, { parser: 'babel' });
 
-  fs.writeFileSync(storybookRequiresLocation, formattedFileContent, {
+  fs.writeFileSync(designerRequiresLocation, formattedFileContent, {
     encoding: 'utf8',
     flag: 'w',
   });
 }
 
-
-const args = getArguments();
-writeRequires(args);
+module.exports = { writeRequires }
