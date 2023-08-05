@@ -23,7 +23,7 @@ function createDesigner(args) {
   const mainJs = path.resolve(designerFolder, 'main.js');
   const mainJsContent = `
   module.exports = {
-      stories: [
+      designs: [
           "../src/**/*.design.@(js|jsx|ts|tsx)",
       ],
   }

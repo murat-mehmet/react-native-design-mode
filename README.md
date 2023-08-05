@@ -3,10 +3,19 @@
 [![npm version](https://badge.fury.io/js/react-native-design-mode.svg)](https://badge.fury.io/js/react-native-design-mode)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
+
+<h4 align="center">
+    A Lightweight Storybook Alternative for Effortless View Design.
+</h4>
+<div align="center">
+    <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/basic.png" width="250px" /> 
+    <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/search.png" width="250px" /> 
+</div>
+
 ## Description
 React Native Design Mode is a developer-friendly package that streamlines the process of creating views without the need to navigate through the entire app flow. If you've found Storybook to be a bit heavy for your simple projects, this package offers a lightweight alternative with all the features you need.
 
-Heavily inspired by storybook project so many things are similar.
+Heavily inspired by storybook project so most things are similar.
 
 ## Features
 
@@ -72,9 +81,7 @@ AppRegistry.registerComponent(appName, () => Designer);
 
 #### Now you are ready to create your first design!
 
-## Creating designs
-
-### Basic
+### Creating designs
 For example we have a `Login.tsx` screen that we want to design.
 
 We simply create a `Login.design.tsx` file near it.
@@ -88,11 +95,23 @@ export default {
   component: Login,
 }
 ```
+
 That's it! Now start the app and you will see Login screen in design mode.
 
-### With variants
+### Moving between designs
 
-We can easily create different variants of a design
+While we are on the design selection screen, floating button works like a toggle to switch design mode on/off.
+
+After you select a design, we can click on floating button to go back to design list.
+
+<div>
+    <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/predesign.jpg" width="250px" />
+    <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/design.jpg" width="250px" />
+</div>
+
+### Creating designs with variants
+
+We can easily create different variants of a design by exporting more design objects.
 ```typescript jsx
 // src/Login.design.tsx
 
@@ -109,6 +128,34 @@ export const Basic = {}
 // export another variant
 export const Dark = () => <Login theme={'dark'} />
 ```
+
+### Categorized list view
+
+We can categorize our views infinitely by adding group names in titles
+
+<div>
+    <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/category.png" width="250px" />
+</div>
+
+```typescript jsx
+// src/Login.design.tsx
+
+import Login from './Login';
+
+export default {
+  title: 'Authentication/Login',
+  component: Login,
+}
+```
+
+### Draggable floating button
+
+We have the flexibility to position the floating button on the screen edges, ensuring it won't obstruct our view design process.
+
+<div>
+    <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/floating1.png" width="250px" />
+    <img src="https://raw.github.com/murat-mehmet/react-native-design-mode/master/images/floating2.png" width="250px" />
+</div>
 
 ## Configuration
 ### `main.js`
