@@ -275,7 +275,29 @@ export default {
   }
 };
 ```
-- `parameters`: Global parameters that will be applied on all designs. In the future we will use this for things like sorting etc.
+- `parameters`: Global parameters that will be applied on all designs.
+#### Parameter: `designer`
+This is a special parameter which can config features of our designer. 
+Currently there is only one feature:
+  
+##### Theme Switcher
+
+To enable theme switcher feature, add a `themeSwitcher` parameter like in example:
+```js
+export const parameters = {
+  designer: {
+    themeSwitcher: {
+      set: (ctx, value) => {
+        // here you can set your theme
+        // value is true for dark, false for light
+      },
+      value: false, // initial value
+    }
+  }
+}
+
+```
+
 - `loaders`: This is an object of promise functions that will be executed before displaying any design. The loaded results can be accessed from `ctx.loaded` field.
 
 Example

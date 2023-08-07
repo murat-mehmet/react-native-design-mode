@@ -45,52 +45,53 @@ export class DesignContext {
 
             for (const componentStub of components) {
                 let component = getComponentFromDesign(designMeta, componentStub.component);
-                const parameters = {...this.parameters, ...designMeta.parameters, ...componentStub.component?.parameters};
-                const loaders = {...this.loaders, ...designMeta.loaders, ...componentStub.component?.loaders};
-                const decorators = [
-                    ...componentStub.component?.decorators || [],
-                    ...designMeta.decorators || [],
-                    ...this.decorators || [],
-                ];
-                const subContext = {
-                    loaded: this.loaded,
-                    parameters,
-                    loaders,
-                    decorators,
-                }
-                let _prepare;
-                if (!!Object.keys(this.loaders).length) {
-                    _prepare = async (context) => {
-                        for (const [name, loader] of Object.entries<(ctx: any) => Promise<any>>(loaders)) {
-                            if (this.loaded[name])
-                                continue;
-                            try {
-                                this.loaded[name] = await loader(context);
-                            } catch (err) {
-                                this.loaded[name] = err;
-                            }
-                        }
-                        const componentPrepare = componentStub.component?.prepare || designMeta.prepare;
-                        if (componentPrepare)
-                            return componentPrepare(context);
-                    }
-                } else
-                    _prepare = componentStub.component?.prepare || designMeta.prepare;
 
-                let prepare;
-                if (_prepare)
-                    prepare = () => _prepare(subContext);
-
-                for (const decorator of decorators) {
-                    component = applyDecorator(decorator, component, subContext);
-                }
-
-                designStub.components.push({
+                let designTimeParameters = {...this.parameters, ...designMeta.parameters, ...componentStub.component?.parameters};
+                let designComponent: Record<string, any> = {
                     title: componentStub.component?.title || componentStub.name,
-                    prepare,
-                    component,
-                    parameters,
-                })
+                    parameters: designTimeParameters,
+                };
+                designComponent.prepare = async () => {
+                    let runTimeParameters = {...this.parameters, ...designMeta.parameters, ...componentStub.component?.parameters};
+                    const decorators = [
+                        ...componentStub.component?.decorators || [],
+                        ...designMeta.decorators || [],
+                        ...this.decorators || [],
+                    ];
+                    const subContext = {
+                        loaded: this.loaded,
+                        parameters: runTimeParameters,
+                        decorators,
+                    }
+
+                    // execute loaders
+                    const loaders = {...this.loaders, ...designMeta.loaders, ...componentStub.component?.loaders};
+                    for (const [name, loader] of Object.entries<(ctx: any) => Promise<any>>(loaders)) {
+                        if (this.loaded[name])
+                            continue;
+                        try {
+                            this.loaded[name] = await loader(subContext);
+                        } catch (err) {
+                            this.loaded[name] = err;
+                        }
+                    }
+
+                    // apply decorators
+                    let decoratedComponent = component;
+                    if (decorators.length) {
+                        for (const decorator of decorators) {
+                            decoratedComponent = await applyDecorator(decorator, decoratedComponent, subContext);
+                        }
+                    }
+                    designComponent.component = decoratedComponent;
+
+                    // execute local prepare
+                    const localPrepare = componentStub.component?.prepare || designMeta.prepare
+                    if (localPrepare)
+                        await localPrepare(subContext);
+                }
+
+                designStub.components.push(designComponent)
             }
             designStubs.push(designStub);
         }
@@ -99,8 +100,8 @@ export class DesignContext {
     }
 }
 
-function applyDecorator(decorator, component, context) {
-    const decorated = decorator(component, context);
+async function applyDecorator(decorator, component, context) {
+    const decorated = await decorator(component, context);
 
     // <View />
     if (isValidElement(decorated))

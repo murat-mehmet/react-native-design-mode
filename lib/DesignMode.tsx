@@ -5,6 +5,7 @@ import {context} from "./design-context";
 import {DesignModeProps} from './design-mode.types';
 import {DesignPage} from './DesignPage';
 import DragItem from './DragItem';
+import ThemeSwitchButton from "./ThemeSwitchButton";
 
 export class DesignMode extends Component<DesignModeProps, any> {
     state = {
@@ -14,7 +15,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
         pages: [] as {
             title: string;
             prepare: () => Promise<any>;
-            Component: ReactNode;
+            Component: ReactNode | (() => Component);
         }[],
         showPage: false,
         currentPage: 0,
@@ -56,7 +57,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
                     pages.push({
                         title: titles.join('/'),
                         prepare: componentStub.prepare,
-                        Component: <componentStub.component />,
+                        Component: () => <componentStub.component />,
                         hasVariant,
                     });
                 })
@@ -75,7 +76,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
                     });
                 }
             });
-       let willShowPageSelector = !!pages.length;
+        let willShowPageSelector = !!pages.length;
         this.setState({
             shown: true,
             pages,
@@ -89,7 +90,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
             console.log('[Designer] No pages were loaded, will not display floating button')
         else {
             if (prepare) {
-                (async () => prepare(context))()
+                (async () => prepare())()
                     .then(() => this.setState({ready: true}))
                     .catch(e => this.setState({prepareError: e}));
             }
@@ -149,7 +150,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
                                     ? children
                                     : this.state.showPageSelector
                                         ? this.renderPageSelector()
-                                        : this.state.pages[this.state.currentPage]?.Component}
+                                        : this.renderCurrentPage()}
                             </>
                         )}
                     </View>
@@ -282,6 +283,13 @@ export class DesignMode extends Component<DesignModeProps, any> {
                             }}>
                             Select a design
                         </Text>
+                        <View style={[StyleSheet.absoluteFillObject,
+                            {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 5}]}>
+                            <View />
+                            {context.parameters['designer']?.themeSwitcher && (
+                                <ThemeSwitchButton />
+                            )}
+                        </View>
                     </View>
                     <View style={{
                         flexDirection: 'row',
@@ -333,6 +341,13 @@ export class DesignMode extends Component<DesignModeProps, any> {
             </SafeAreaProvider>
         );
     };
+
+    renderCurrentPage = () => {
+        const component = this.state.pages[this.state.currentPage]?.Component;
+        if (typeof component == 'function')
+            return component();
+        return component;
+    }
 }
 
 class Accordion extends Component<{item: {title, children, isComponent, highlight, id}, renderSelectorRow, pad, searching, initialOpenState, setOpenState}, any> {
@@ -343,8 +358,7 @@ class Accordion extends Component<{item: {title, children, isComponent, highligh
     componentDidUpdate(prevProps) {
         if (prevProps.searching != this.props.searching) {
             this.setState({isOpen: this.props.searching});
-        }
-        else if (prevProps.initialOpenState != this.props.initialOpenState) {
+        } else if (prevProps.initialOpenState != this.props.initialOpenState) {
             this.setState({isOpen: this.props.initialOpenState[this.props.item.id]});
         }
     }
@@ -380,8 +394,8 @@ class Accordion extends Component<{item: {title, children, isComponent, highligh
                     <View style={{
                         borderTopWidth: 1,
                         borderColor: '#ccc',
-                    }}>
-                        <Accordion key={i} item={x} renderSelectorRow={this.props.renderSelectorRow}
+                    }} key={i}>
+                        <Accordion item={x} renderSelectorRow={this.props.renderSelectorRow}
                                    pad={this.props.pad + 15}
                                    initialOpenState={this.props.initialOpenState}
                                    setOpenState={this.props.setOpenState}
