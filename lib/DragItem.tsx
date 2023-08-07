@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useEffect, useMemo} from 'react';
 
 import {Dimensions, StyleSheet} from 'react-native';
-import {Gesture, GestureDetector, PanGestureHandler} from 'react-native-gesture-handler';
-import Animated, {runOnJS, runOnUI, useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withTiming,} from 'react-native-reanimated';
+import {PanGestureHandler} from 'react-native-gesture-handler';
+import Animated, {runOnJS, useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withTiming,} from 'react-native-reanimated';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const POINT_HEIGHT = SCREEN_HEIGHT / 3;
@@ -23,15 +23,14 @@ const DragItem = ({children}) => {
             const data = await AsyncStorage.getItem('dragItem');
             if (data) {
                 const {x, y} = JSON.parse(data);
+                // origin.x.value = x;
+                // origin.y.value = y;
                 translateX.value = x;
                 translateY.value = y;
             }
         })();
     }, []);
-    const translateX = useSharedValue(0);
-    const translateY = useSharedValue(0);
-
-    const saveToStorage =() => {
+    const saveToStorage = () => {
         setTimeout(() => {
             AsyncStorage.setItem(
                 'dragItem',
@@ -39,7 +38,13 @@ const DragItem = ({children}) => {
             );
         }, 300);
     };
+    const isDragging = useSharedValue(false);
+    const translateX = useSharedValue(0);
+    const translateY = useSharedValue(0);
+
     const snapTo = (x, y) => {
+        // noinspection BadExpressionStatementJS
+        'worklet';
 
         const topRight = x > SCREEN_WIDTH / 2 && y < POINT_HEIGHT;
         const topLeft = x < SCREEN_WIDTH / 2 && y < POINT_HEIGHT;
@@ -77,19 +82,26 @@ const DragItem = ({children}) => {
             translateX.value = withTiming(0);
             translateY.value = withTiming(0);
         }
-        saveToStorage();
+        runOnJS(saveToStorage)();
     };
 
-    const pan = Gesture.Pan()
-        .onStart((event) => {
+    const gesture = useAnimatedGestureHandler({
+        onStart: (event, ctx) => {
             origin.x.value = translateX.value;
             origin.y.value = translateY.value;
-        }).onChange((e) => {
+            isDragging.value = false;
+        },
+        onActive: (e, ctx) => {
+            const x = e.absoluteX;
+            const y = e.absoluteY;
             translateX.value = e.translationX + origin.x.value;
             translateY.value = e.translationY + origin.y.value;
-        }).onFinalize((e) => {
+        },
+        onEnd: (e, ctx) => {
             snapTo(e.absoluteX, e.absoluteY);
-        }).runOnJS(true);
+            isDragging.value = false;
+        },
+    });
     const rStyles = useAnimatedStyle(() => {
         return {
             width: CIRLE_SIZE,
@@ -116,13 +128,13 @@ const DragItem = ({children}) => {
     );
 
     return (
-        <GestureDetector gesture={pan}>
+        <PanGestureHandler onGestureEvent={gesture}>
             <Animated.View style={[rStyles, {
                 position: 'absolute',
                 bottom: 0,
                 left: 0
             }]}>{clonedChildren}</Animated.View>
-        </GestureDetector>
+        </PanGestureHandler>
     );
 };
 
