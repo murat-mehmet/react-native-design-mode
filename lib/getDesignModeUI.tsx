@@ -1,13 +1,12 @@
 import React from "react";
-import {StyleSheet} from "react-native";
-import {GestureHandlerRootView} from "react-native-gesture-handler";
+import {StyleSheet, View} from "react-native";
 import {DesignMode} from "./DesignMode";
 
 export function getDesignModeUI() {
     return () => (
-        <GestureHandlerRootView style={StyleSheet.absoluteFillObject}
-                                pointerEvents={"box-none"}>
+        <View style={StyleSheet.absoluteFillObject}
+              pointerEvents={"box-none"}>
             <DesignMode enabled />
-        </GestureHandlerRootView>
+        </View>
     );
 }
