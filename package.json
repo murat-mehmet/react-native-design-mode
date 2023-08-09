@@ -1,6 +1,6 @@
 {
   "name": "react-native-design-mode",
-  "version": "2.1.20",
+  "version": "2.1.21",
   "description": "Design mode for React Native",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

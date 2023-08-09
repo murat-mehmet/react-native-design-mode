@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {Component, ReactNode} from 'react';
 import {KeyboardAvoidingView, LayoutAnimation, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,} from 'react-native';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
@@ -11,7 +12,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
     state = {
         ready: false,
         prepareError: null as Error,
-        shown: true,
+        shown: false,
         pages: [] as {
             title: string;
             prepare: () => Promise<any>;
@@ -28,10 +29,13 @@ export class DesignMode extends Component<DesignModeProps, any> {
     initialOpenStates = {
         set: (id, isOpen) => this.setState(state => {
             state.initialOpenStates[id] = isOpen;
+            AsyncStorage.setItem('designer.initialOpenStates', JSON.stringify(state.initialOpenStates)).catch(console.warn);
             return {initialOpenStates: {...state.initialOpenStates}};
         }),
-        get: (id) => this.state.initialOpenStates[id],
-        clear: () => this.setState({initialOpenStates: {}})
+        clear: () => {
+            this.setState({initialOpenStates: {}});
+            AsyncStorage.setItem('designer.initialOpenStates', JSON.stringify({})).catch(console.warn);
+        }
     };
 
     componentDidMount() {
@@ -77,24 +81,35 @@ export class DesignMode extends Component<DesignModeProps, any> {
                 }
             });
         let willShowPageSelector = !!pages.length;
-        this.setState({
-            shown: true,
-            pages,
-            showPage: willShowPageSelector,
-            showPageSelector: willShowPageSelector,
-            prepareError: null,
-            ready: willShowPageSelector || !prepare,
-            loadedPageList: !!pages.length,
-        });
-        if (!pages.length)
-            console.log('[Designer] No pages were loaded, will not display floating button')
-        else {
-            if (prepare) {
-                (async () => prepare())()
-                    .then(() => this.setState({ready: true}))
-                    .catch(e => this.setState({prepareError: e}));
-            }
-        }
+        AsyncStorage.multiGet(['designer.shown', 'designer.initialOpenStates'])
+            .then((res) => {
+                let data = res.reduce((obj, x) => {
+                    obj[x[0]] = x[1] && JSON.parse(x[1]);
+                    return obj;
+                }, {})
+                const shown = data['designer.shown'] ?? true;
+                const initialOpenStates = data['designer.initialOpenStates'] ?? {};
+                this.setState({
+                    shown,
+                    initialOpenStates,
+                    pages,
+                    showPage: willShowPageSelector,
+                    showPageSelector: willShowPageSelector,
+                    prepareError: null,
+                    ready: willShowPageSelector || !prepare,
+                    loadedPageList: !!pages.length,
+                });
+                if (!pages.length)
+                    console.log('[Designer] No pages were loaded, will not display floating button')
+                else {
+                    if (prepare) {
+                        (async () => prepare())()
+                            .then(() => this.setState({ready: true}))
+                            .catch(e => this.setState({prepareError: e}));
+                    }
+                }
+            })
+
     };
 
     render() {
@@ -164,7 +179,9 @@ export class DesignMode extends Component<DesignModeProps, any> {
                             style={styles.showButton}
                             onPress={() => {
                                 if (!this.state.shown) {
-                                    this.load();
+                                    AsyncStorage.setItem('designer.shown', JSON.stringify(true))
+                                        .then(() => this.load())
+                                        .catch(console.warn)
                                 } else if (
                                     this.state.showPage &&
                                     !this.state.showPageSelector
@@ -178,6 +195,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
                                     this.setState({
                                         shown: false,
                                     });
+                                    AsyncStorage.setItem('designer.shown', JSON.stringify(false)).catch(console.warn)
                                 }
                             }}>
                             <Text style={[styles.text]}>🛠️</Text>
