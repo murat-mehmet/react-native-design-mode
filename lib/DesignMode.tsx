@@ -6,10 +6,12 @@ import {context} from "./design-context";
 import {DesignModeProps} from './design-mode.types';
 import {DesignPage} from './DesignPage';
 import DragItem from './DragItem';
+import {ShutDownButton} from "./ShutDownButton";
 import ThemeSwitchButton from "./ThemeSwitchButton";
 
 export class DesignMode extends Component<DesignModeProps, any> {
     state = {
+        isRemoved: true,
         ready: false,
         prepareError: null as Error,
         shown: false,
@@ -39,7 +41,12 @@ export class DesignMode extends Component<DesignModeProps, any> {
     };
 
     componentDidMount() {
-        this.load();
+        AsyncStorage.getItem('designer.isRemoved')
+            .then(isRemoved => {
+                if (isRemoved != '1')
+                    this.load();
+
+            })
     }
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -90,6 +97,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
                 const shown = data['designer.shown'] ?? true;
                 const initialOpenStates = data['designer.initialOpenStates'] ?? {};
                 this.setState({
+                    isRemoved: false,
                     shown,
                     initialOpenStates,
                     pages,
@@ -112,10 +120,15 @@ export class DesignMode extends Component<DesignModeProps, any> {
 
     };
 
+    removeButton = () => {
+        AsyncStorage.setItem('designer.isRemoved', '1');
+        this.setState({isRemoved: true});
+    }
+
     render() {
         const {children, enabled} = this.props;
         const isEnabled = enabled == null ? __DEV__ : enabled;
-        if (!this.state.loadedPageList || !isEnabled) {
+        if (this.state.isRemoved || !this.state.loadedPageList || !isEnabled) {
             return null;
         }
 
@@ -303,7 +316,7 @@ export class DesignMode extends Component<DesignModeProps, any> {
                         </Text>
                         <View style={[StyleSheet.absoluteFillObject,
                             {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 5}]}>
-                            <View />
+                            <ShutDownButton onRemove={this.removeButton} />
                             {context.parameters['designer']?.themeSwitcher && (
                                 <ThemeSwitchButton />
                             )}
