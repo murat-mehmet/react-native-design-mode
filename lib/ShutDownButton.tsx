@@ -12,7 +12,7 @@ export const ShutDownButton = ({onRemove}) => {
     }
     return (
         <TouchableOpacity style={styles.button} onPress={onPress}>
-            <Text style={{fontSize: 18}}>⏼</Text>
+            <Text style={{fontSize: 18}}>✕</Text>
         </TouchableOpacity>
     )
 }
