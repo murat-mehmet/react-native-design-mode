@@ -54,8 +54,9 @@ function createDesigner(args) {
   const indexJsContent = `
     import {getDesignModeUI} from "react-native-design-mode";
 
-    // comment out the following line when deploying to production
-    import './designer.requires';
+    if (__DEV__) {
+      require('./designer.requires');
+    }
 
     const Designer = getDesignModeUI();
     export default Designer;
