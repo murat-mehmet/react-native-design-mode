@@ -206,14 +206,15 @@ module.exports = {
 ```js
 import { getDesignModeUI } from "react-native-design-mode";
 
-// comment out the following line when deploying to production
-import "./designer.requires";
+if (__DEV__) {
+  require('./designer.requires');
+}
 
 const Designer = getDesignModeUI();
 
 export default Designer;
 ```
-All designs are imported here. Before deploying to production either you remove `<Designer />` from usage or comment out `import "./designer.requires";` line in this file.
+All designs are imported here. Designs are stripped out by bundler when building for production so you dont have to worry about it.
 
 ### &#128196; `designer.requires.js`
 ```js
