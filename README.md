@@ -190,7 +190,7 @@ We have the flexibility to position the floating button on the screen edges, ens
 </div>
 
 - Note: To make the floating button draggable on android,
-make sure you use either `GestureHandlerRootView` or `gestureHandlerRootHOC`. Check [installation docs for RNGH](https://docs.swmansion.com/react-native-gesture-handler/docs/installation#js)
+make sure you use either `GestureHandlerRootView` or `gestureHandlerRootHOC`. Check [installation docs for RNGH](https://docs.swmansion.com/react-native-gesture-handler/docs/fundamentals/installation)
 
 ## &#9881; Configuration
 ### &#128196; `main.js`
